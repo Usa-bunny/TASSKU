@@ -1,0 +1,2116 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TASKKU - Manajemen Tugas dengan Fitur Catatan Lengkap</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3.2.0/dist/email.min.js"></script>
+    <style>
+        :root {
+            --background: #ffffff;
+            --foreground: #000000;
+            --card-bg: #f8f8f8;
+            --accent: #4a4a4a;
+            --border: #e0e0e0;
+            --danger: #d32f2f;
+            --warning: #f57c00;
+            --safe: #388e3c;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --sidebar-width: 250px;
+            --sidebar-bg: #f0f0f0;
+            --active-category: #e0e0e0;
+        }
+
+        .dark-mode {
+            --background: #121212;
+            --foreground: #ffffff;
+            --card-bg: #1e1e1e;
+            --accent: #9e9e9e;
+            --border: #2c2c2c;
+            --danger: #f44336;
+            --warning: #ff9800;
+            --safe: #4caf50;
+            --shadow: rgba(0, 0, 0, 0.3);
+            --sidebar-bg: #1a1a1a;
+            --active-category: #2d2d2d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--foreground);
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: var(--sidebar-width) 1fr;
+            grid-template-rows: auto 1fr;
+            grid-template-areas: 
+                "sidebar header"
+                "sidebar main";
+        }
+
+        /* Header Styles */
+        header {
+            grid-area: header;
+            background-color: var(--background);
+            color: var(--foreground);
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px var(--shadow);
+            border-bottom: 1px solid var(--border);
+            z-index: 90;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--foreground);
+            color: var(--background);
+        }
+
+        .app-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .control-btn {
+            background: none;
+            border: 1px solid var(--border);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            color: var(--foreground);
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-btn:hover {
+            background-color: var(--border);
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            grid-area: sidebar;
+            background-color: var(--sidebar-bg);
+            padding: 1rem;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            overflow-y: auto;
+            border-right: 1px solid var(--border);
+        }
+
+        .sidebar-section {
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-title {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .category-list {
+            list-style: none;
+        }
+
+        .category-item {
+            padding: 0.7rem 1rem;
+            border-radius: 5px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background-color 0.2s;
+        }
+
+        .category-item:hover {
+            background-color: var(--active-category);
+        }
+
+        .category-item.active {
+            background-color: var(--active-category);
+            font-weight: 600;
+        }
+
+        .category-item i {
+            font-size: 0.9rem;
+        }
+
+        .add-category-btn {
+            background: none;
+            border: none;
+            color: var(--accent);
+            cursor: pointer;
+            padding: 0.7rem 1rem;
+            border-radius: 5px;
+            width: 100%;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 0.5rem;
+        }
+
+        .add-category-btn:hover {
+            background-color: var(--active-category);
+        }
+
+        /* Main Content Styles */
+        main {
+            grid-area: main;
+            padding: 1rem;
+            padding-bottom: 80px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            margin: 20px 0 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tasks-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .task-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 5px var(--shadow);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s;
+            border: 1px solid var(--border);
+            cursor: pointer;
+        }
+
+        .task-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px var(--shadow);
+        }
+
+        .task-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+        }
+
+        .task-card.safe::before {
+            background: var(--safe);
+        }
+
+        .task-card.warning::before {
+            background: var(--warning);
+        }
+
+        .task-card.danger::before {
+            background: var(--danger);
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .task-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--foreground);
+        }
+
+        .task-subject {
+            background: var(--accent);
+            color: var(--background);
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .task-details {
+            margin: 10px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .task-detail {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+
+        .task-detail i {
+            color: var(--accent);
+            width: 20px;
+            text-align: center;
+        }
+
+        .task-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border);
+        }
+
+        .complete-btn {
+            background: var(--safe);
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 1.1rem;
+        }
+
+        .add-task-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--foreground);
+            color: var(--background);
+            border: none;
+            font-size: 1.5rem;
+            box-shadow: 0 3px 10px var(--shadow);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 90;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 20px;
+            box-shadow: 0 5px 15px var(--shadow);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            color: var(--foreground);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--foreground);
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--foreground);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid var(--border);
+            background: var(--background);
+            color: var(--foreground);
+            font-size: 1rem;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .submit-btn {
+            background: var(--foreground);
+            color: var(--background);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        /* Task Detail Modal */
+        .task-detail-modal .task-content {
+            margin: 15px 0;
+            line-height: 1.6;
+        }
+
+        .task-detail-modal .task-content p {
+            white-space: pre-line;
+            margin-bottom: 15px;
+        }
+
+        /* Note Editor */
+        .note-editor {
+            margin-top: 20px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            padding: 10px;
+        }
+
+        .editor-toolbar {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+
+        .tool-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .tool-btn:hover {
+            background: var(--background);
+        }
+
+        .editor-content {
+            min-height: 200px;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            background: var(--background);
+            color: var(--foreground);
+        }
+
+        .editor-content:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        /* Full Screen Note Editor */
+        .fullscreen-note {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--background);
+            z-index: 2000;
+            flex-direction: column;
+        }
+
+        .note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .note-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .note-body {
+            flex: 1;
+            padding: 1rem;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .page-tabs {
+            display: flex;
+            gap: 5px;
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+
+        .page-tab {
+            padding: 8px 15px;
+            border: 1px solid var(--border);
+            border-radius: 5px 5px 0 0;
+            cursor: pointer;
+            background: var(--card-bg);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .page-tab.active {
+            background: var(--accent);
+            color: var(--background);
+        }
+
+        .add-page-btn {
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            cursor: pointer;
+            background: var(--card-bg);
+        }
+
+        .design-area {
+            flex: 1;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            margin-top: 10px;
+            position: relative;
+            overflow: auto;
+            background: white;
+        }
+
+        .design-element {
+            padding: 10px;
+            border: 1px dashed var(--border);
+            margin: 10px;
+            cursor: move;
+            position: absolute;
+            background: white;
+            color: black;
+            min-width: 100px;
+            min-height: 40px;
+            resize: both;
+            overflow: auto;
+        }
+
+        .design-element.selected {
+            border: 2px solid var(--accent);
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--card-bg);
+            border-left: 4px solid var(--warning);
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 3px 10px var(--shadow);
+            display: none;
+            max-width: 300px;
+            z-index: 1000;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        /* Empty State */
+        .no-tasks {
+            text-align: center;
+            padding: 30px;
+            color: var(--accent);
+            grid-column: 1 / -1;
+        }
+
+        .no-tasks i {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body {
+                grid-template-columns: 1fr;
+                grid-template-areas: 
+                    "header"
+                    "main";
+            }
+
+            .sidebar {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100%;
+                z-index: 1000;
+                width: 80%;
+                max-width: 300px;
+            }
+
+            .sidebar.active {
+                display: block;
+            }
+
+            .tasks-container {
+                grid-template-columns: 1fr;
+            }
+            
+            header {
+                padding: 0.8rem;
+            }
+            
+            .app-name {
+                font-size: 1.3rem;
+            }
+
+            .menu-toggle {
+                display: block;
+            }
+        }
+
+        /* Menu Toggle Button (Mobile) */
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--foreground);
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .menu-toggle {
+                display: block;
+            }
+        }
+
+        /* Note List in Sidebar */
+        .note-item {
+            padding: 0.7rem 1rem;
+            border-radius: 5px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: background-color 0.2s;
+        }
+
+        .note-item:hover {
+            background-color: var(--active-category);
+        }
+
+        .note-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        /* Verification Section */
+        .verification-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border);
+        }
+
+        .verification-status {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 5px;
+            font-size: 0.9rem;
+        }
+
+        .verified {
+            color: var(--safe);
+        }
+
+        .not-verified {
+            color: var(--danger);
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-section">
+            <h3 class="sidebar-title"><i class="fas fa-border-all"></i> Kategori</h3>
+            <ul class="category-list" id="categoryList">
+                <!-- Kategori akan diisi oleh JavaScript -->
+            </ul>
+            <button class="add-category-btn" id="addCategoryBtn">
+                <i class="fas fa-plus"></i> Tambah Kategori
+            </button>
+        </div>
+
+        <div class="sidebar-section">
+            <h3 class="sidebar-title"><i class="fas fa-sticky-note"></i> Catatan</h3>
+            <div id="notesList">
+                <!-- Daftar catatan akan diisi oleh JavaScript -->
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <h3 class="sidebar-title"><i class="fas fa-bell"></i> Notifikasi</h3>
+            <div id="notificationList">
+                <!-- Notifikasi akan diisi oleh JavaScript -->
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <h3 class="sidebar-title"><i class="fas fa-cog"></i> Pengaturan</h3>
+            <div class="category-item" id="settingsBtn">
+                <i class="fas fa-sliders-h"></i> Pengaturan
+            </div>
+            <div class="category-item" id="createNoteBtn">
+                <i class="fas fa-sticky-note"></i> Buat Catatan
+            </div>
+        </div>
+    </aside>
+
+    <!-- Header -->
+    <header>
+        <div class="logo-container">
+            <button class="menu-toggle" id="menuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="logo">
+                <i class="fas fa-tasks"></i>
+            </div>
+            <h1 class="app-name">TASKKU</h1>
+        </div>
+        
+        <div class="header-controls">
+            <button class="control-btn" id="theme-toggle">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <div class="container">
+            <h2 class="section-title">
+                <i class="fas fa-list"></i>
+                <span id="currentCategory">Semua Tugas</span>
+            </h2>
+            
+            <div class="tasks-container" id="tasksContainer">
+                <!-- Tugas akan diisi oleh JavaScript -->
+            </div>
+        </div>
+    </main>
+    
+    <!-- Floating Action Button -->
+    <button class="add-task-btn" id="addTaskBtn">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    <!-- Modal Tambah Tugas -->
+    <div class="modal" id="taskModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="taskModalTitle">Tambah Tugas Baru</h2>
+                <button class="close-btn" id="closeTaskModal">&times;</button>
+            </div>
+            
+            <form id="taskForm">
+                <div class="form-group">
+                    <label for="taskName">Judul Tugas</label>
+                    <input type="text" class="form-control" id="taskName" placeholder="Masukkan judul tugas" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="taskCategory">Kategori</label>
+                    <div style="display: flex; gap: 10px;">
+                        <select class="form-control" id="taskCategory" style="flex: 1;" required>
+                            <!-- Opsi kategori akan diisi oleh JavaScript -->
+                        </select>
+                        <button type="button" class="control-btn" id="newCategoryBtn" title="Tambah Kategori Baru">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="taskDeadline">Deadline</label>
+                    <input type="datetime-local" class="form-control" id="taskDeadline" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="taskDescription">Catatan Tugas</label>
+                    <textarea class="form-control" id="taskDescription" rows="4" placeholder="Tambahkan catatan detail tentang tugas ini"></textarea>
+                </div>
+                
+                <button type="submit" class="submit-btn">
+                    <i class="fas fa-plus"></i> Simpan Tugas
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Detail Tugas -->
+    <div class="modal task-detail-modal" id="taskDetailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="detailTaskTitle">Judul Tugas</h2>
+                <button class="close-btn" id="closeDetailModal">&times;</button>
+            </div>
+            
+            <div class="task-details">
+                <div class="task-detail">
+                    <i class="fas fa-book"></i>
+                    <span id="detailTaskSubject">Mata Pelajaran</span>
+                </div>
+                
+                <div class="task-detail">
+                    <i class="far fa-calendar"></i>
+                    <span id="detailTaskDeadline">Deadline: -</span>
+                </div>
+                
+                <div class="task-detail">
+                    <i class="far fa-clock"></i>
+                    <span id="detailTaskTimeLeft">Sisa Waktu: -</span>
+                </div>
+            </div>
+            
+            <div class="task-content">
+                <h3>Catatan Tugas:</h3>
+                <p id="detailTaskDescription">Tidak ada catatan</p>
+            </div>
+
+            <div class="note-editor">
+                <h3>Editor Catatan:</h3>
+                <div class="editor-toolbar">
+                    <button type="button" class="tool-btn" data-command="bold"><i class="fas fa-bold"></i></button>
+                    <button type="button" class="tool-btn" data-command="italic"><i class="fas fa-italic"></i></button>
+                    <button type="button" class="tool-btn" data-command="underline"><i class="fas fa-underline"></i></button>
+                    <button type="button" class="tool-btn" data-command="insertUnorderedList"><i class="fas fa-list-ul"></i></button>
+                    <button type="button" class="tool-btn" data-command="insertOrderedList"><i class="fas fa-list-ol"></i></button>
+                    <button type="button" class="tool-btn" id="downloadNoteTextBtn">
+                        <i class="fas fa-download"></i> Download Teks
+                    </button>
+                    <button type="button" class="tool-btn" id="openFullScreenEditor">
+                        <i class="fas fa-expand"></i> Buka Editor Lengkap
+                    </button>
+                </div>
+                <div class="editor-content" id="noteEditor" contenteditable="true"></div>
+                <button class="submit-btn" id="saveNoteBtn" style="margin-top: 15px;">
+                    <i class="fas fa-save"></i> Simpan Catatan
+                </button>
+            </div>
+            
+            <div class="task-actions">
+                <button class="complete-btn" id="editTaskBtn">
+                    <i class="fas fa-edit"></i> Edit Tugas
+                </button>
+                <button class="complete-btn" id="completeTaskBtn">
+                    <i class="fas fa-check"></i> Tandai Selesai
+                </button>
+                <button class="delete-btn" id="deleteTaskBtn">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Kategori -->
+    <div class="modal" id="categoryModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="categoryModalTitle">Tambah Kategori Baru</h2>
+                <button class="close-btn" id="closeCategoryModal">&times;</button>
+            </div>
+            
+            <form id="categoryForm">
+                <div class="form-group">
+                    <label for="categoryName">Nama Kategori</label>
+                    <input type="text" class="form-control" id="categoryName" placeholder="Masukkan nama kategori" required>
+                </div>
+                
+                <button type="submit" class="submit-btn">
+                    <i class="fas fa-plus"></i> Simpan Kategori
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Pengaturan -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Pengaturan</h2>
+                <button class="close-btn" id="closeSettingsModal">&times;</button>
+            </div>
+            
+            <div class="form-group">
+                <label>Notifikasi</label>
+                <div style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+                    <input type="checkbox" id="enableNotifications" checked>
+                    <label for="enableNotifications">Aktifkan notifikasi</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Pengingat Tugas</label>
+                <select class="form-control" id="reminderTime">
+                    <option value="1">1 hari sebelum deadline</option>
+                    <option value="2">2 hari sebelum deadline</option>
+                    <option value="3" selected>3 hari sebelum deadline</option>
+                    <option value="7">1 minggu sebelum deadline</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="userEmail">Email untuk Notifikasi</label>
+                <input type="email" class="form-control" id="userEmail" placeholder="Masukkan email Anda">
+                <div class="verification-section" id="emailVerificationSection" style="display: none;">
+                    <div class="verification-status" id="emailVerificationStatus">
+                        <i class="fas fa-times-circle not-verified"></i>
+                        <span>Email belum diverifikasi</span>
+                    </div>
+                    <button type="button" class="submit-btn" id="sendVerificationBtn" style="margin-top: 10px;">
+                        <i class="fas fa-envelope"></i> Kirim Email Verifikasi
+                    </button>
+                    <div class="form-group" id="verificationCodeGroup" style="display: none; margin-top: 10px;">
+                        <label for="verificationCode">Kode Verifikasi</label>
+                        <input type="text" class="form-control" id="verificationCode" placeholder="Masukkan kode verifikasi">
+                        <button type="button" class="submit-btn" id="verifyEmailBtn" style="margin-top: 10px;">
+                            <i class="fas fa-check"></i> Verifikasi Email
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="sidebar-title">Kelola Kategori</h3>
+            <div id="manageCategories">
+                <!-- Daftar kategori untuk dikelola -->
+            </div>
+            
+            <button class="submit-btn" id="saveSettingsBtn">
+                <i class="fas fa-save"></i> Simpan Pengaturan
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal Buat Catatan -->
+    <div class="modal" id="createNoteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Buat Catatan Baru</h2>
+                <button class="close-btn" id="closeCreateNoteModal">&times;</button>
+            </div>
+            
+            <div class="form-group">
+                <label for="noteTitle">Judul Catatan</label>
+                <input type="text" class="form-control" id="noteTitle" placeholder="Masukkan judul catatan" required>
+            </div>
+            
+            <button class="submit-btn" id="startNoteBtn">
+                <i class="fas fa-plus"></i> Buat Catatan
+            </button>
+        </div>
+    </div>
+
+    <!-- Full Screen Note Editor -->
+    <div class="fullscreen-note" id="fullScreenNote">
+        <div class="note-header">
+            <input type="text" id="fullScreenNoteTitle" class="form-control" value="Catatan Baru" style="font-size: 1.5rem; font-weight: bold; border: none; background: transparent;">
+            <div class="note-controls">
+                <button class="control-btn" id="downloadNoteBtn" title="Download Catatan">
+                    <i class="fas fa-download"></i>
+                </button>
+                <button class="control-btn" id="saveNoteBtnFull" title="Simpan Catatan">
+                    <i class="fas fa-save"></i>
+                </button>
+                <button class="control-btn" id="closeFullScreenBtn" title="Tutup Editor">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="page-tabs" id="pageTabs">
+            <!-- Tab halaman akan diisi oleh JavaScript -->
+        </div>
+        
+        <div class="note-body">
+            <div class="editor-toolbar">
+                <button type="button" class="tool-btn" data-command="bold"><i class="fas fa-bold"></i> Tebal</button>
+                <button type="button" class="tool-btn" data-command="italic"><i class="fas fa-italic"></i> Miring</button>
+                <button type="button" class="tool-btn" data-command="underline"><i class="fas fa-underline"></i> Garis Bawah</button>
+                <button type="button" class="tool-btn" data-command="insertUnorderedList"><i class="fas fa-list-ul"></i> Daftar</button>
+                <button type="button" class="tool-btn" data-command="insertOrderedList"><i class="fas fa-list-ol"></i> Angka</button>
+            </div>
+            
+            <div class="editor-content" id="fullScreenEditor" contenteditable="true" style="flex: 1;">
+                <!-- Konten editor -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifikasi -->
+    <div class="notification" id="notification">
+        <div class="notification-title" id="notifTitle">Pengingat Tugas</div>
+        <div class="notification-message" id="notifMessage">Pesan notifikasi</div>
+    </div>
+
+    <script>
+        // Data aplikasi
+        let tasks = JSON.parse(localStorage.getItem('taskku-tasks')) || [
+            {
+                id: 1,
+                title: "Laporan Biologi",
+                category: "Sekolah",
+                deadline: getFutureDate(5),
+                description: "Buat laporan tentang ekosistem hutan hujan tropis. \n\n- Sertakan gambar ilustrasi\n- Minimal 5 halaman\n- Dikumpulkan dalam bentuk print dan softcopy",
+                completed: false,
+                createdAt: new Date().toISOString(),
+                notes: ""
+            },
+            {
+                id: 2,
+                title: "Soal Matematika",
+                category: "Sekolah",
+                deadline: getFutureDate(3),
+                description: "Kerjakan soal halaman 120-125 no. 1-20. \n\nTunjukkan langkah penyelesaian untuk setiap soal.",
+                completed: false,
+                createdAt: new Date().toISOString(),
+                notes: ""
+            },
+            {
+                id: 3,
+                title: "Project Website",
+                category: "Koding",
+                deadline: getFutureDate(7),
+                description: "Buat website portfolio menggunakan HTML, CSS, dan JavaScript.",
+                completed: false,
+                createdAt: new Date().toISOString(),
+                notes: "# Rencana Project\n- [ ] Buat layout dasar\n- [ ] Desain halaman utama\n- [ ] Tambahkan animasi\n- [ ] Optimasi untuk mobile"
+            }
+        ];
+
+        let categories = JSON.parse(localStorage.getItem('taskku-categories')) || [
+            { id: 1, name: "Sekolah" },
+            { id: 2, name: "Koding" },
+            { id: 3, name: "Pribadi" }
+        ];
+
+        let notes = JSON.parse(localStorage.getItem('taskku-notes')) || [];
+
+        let settings = JSON.parse(localStorage.getItem('taskku-settings')) || {
+            notifications: true,
+            reminderTime: 3,
+            userEmail: "",
+            emailVerified: false,
+            emailVerificationCode: ""
+        };
+
+        let currentCategory = "all";
+        let currentTask = null;
+        let currentNote = null;
+        let currentPage = 0;
+        let isEditingTask = false;
+
+        // Inisialisasi EmailJS (ganti dengan User ID Anda)
+        emailjs.init("HfSJk1N37jPUL4eIP");
+
+        // Helper function untuk mendapatkan tanggal mendatang
+        function getFutureDate(days) {
+            const date = new Date();
+            date.setDate(date.getDate() + days);
+            date.setHours(23, 59, 0);
+            return date.toISOString().slice(0, 16);
+        }
+
+        // Simpan data ke localStorage
+        function saveData() {
+            localStorage.setItem('taskku-tasks', JSON.stringify(tasks));
+            localStorage.setItem('taskku-categories', JSON.stringify(categories));
+            localStorage.setItem('taskku-notes', JSON.stringify(notes));
+            localStorage.setItem('taskku-settings', JSON.stringify(settings));
+        }
+
+        // Inisialisasi tema
+        function initTheme() {
+            const savedTheme = localStorage.getItem('taskku-theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                document.getElementById('theme-toggle').innerHTML = '<i class="fas fa-sun"></i>';
+            }
+        }
+        
+        // Toggle tema
+        document.getElementById('theme-toggle').addEventListener('click', function() {
+            document.body.classList.toggle('dark-mode');
+            
+            if (document.body.classList.contains('dark-mode')) {
+                localStorage.setItem('taskku-theme', 'dark');
+                this.innerHTML = '<i class="fas fa-sun"></i>';
+            } else {
+                localStorage.setItem('taskku-theme', 'light');
+                this.innerHTML = '<i class="fas fa-moon"></i>';
+            }
+        });
+        
+        // Format tanggal
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('id-ID', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
+        // Hitung sisa waktu
+        function calculateTimeLeft(deadline) {
+            const now = new Date();
+            const deadlineDate = new Date(deadline);
+            const diff = deadlineDate - now;
+            
+            if (diff < 0) {
+                return {
+                    text: "Tenggat waktu telah lewat",
+                    status: "danger"
+                };
+            }
+            
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            
+            let status = "safe";
+            if (days < 1) status = "danger";
+            else if (days < 3) status = "warning";
+            
+            return {
+                text: `Sisa waktu: ${days} hari ${hours} jam`,
+                status: status
+            };
+        }
+        
+        // Tampilkan notifikasi
+        function showNotification(title, message) {
+            if (!settings.notifications) return;
+            
+            const notif = document.getElementById('notification');
+            document.getElementById('notifTitle').textContent = title;
+            document.getElementById('notifMessage').textContent = message;
+            
+            notif.style.display = 'block';
+            
+            setTimeout(() => {
+                notif.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Periksa deadline dan tampilkan notifikasi
+        function checkDeadlines() {
+            tasks.forEach(task => {
+                if (!task.completed) {
+                    const timeLeft = calculateTimeLeft(task.deadline);
+                    
+                    if (timeLeft.status === "danger") {
+                        showNotification("Tugas Mendekati Deadline", 
+                            `Tugas "${task.title}" harus segera diselesaikan!`);
+                        
+                        // Kirim notifikasi email jika email sudah diverifikasi
+                        if (settings.emailVerified && settings.userEmail) {
+                            sendEmailNotification(task, "danger");
+                        }
+                    } else if (timeLeft.status === "warning") {
+                        showNotification("Pengingat Tugas", 
+                            `Tugas "${task.title}" sisa 3 hari lagi!`);
+                        
+                        // Kirim notifikasi email jika email sudah diverifikasi
+                        if (settings.emailVerified && settings.userEmail) {
+                            sendEmailNotification(task, "warning");
+                        }
+                    } else {
+                        const days = Math.floor((new Date(task.deadline) - new Date()) / (1000 * 60 * 60 * 24));
+                        if (days === settings.reminderTime) {
+                            showNotification("Pengingat Tugas", 
+                                `Tugas "${task.title}" sisa ${days} hari lagi!`);
+                            
+                            // Kirim notifikasi email jika email sudah diverifikasi
+                            if (settings.emailVerified && settings.userEmail) {
+                                sendEmailNotification(task, "reminder");
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Kirim notifikasi email menggunakan EmailJS
+        function sendEmailNotification(task, type) {
+            let subject = "";
+            let message = "";
+            
+            switch(type) {
+                case "danger":
+                    subject = "Tugas Mendekati Deadline";
+                    message = `Tugas "${task.title}" harus segera diselesaikan! Deadline: ${formatDate(task.deadline)}`;
+                    break;
+                case "warning":
+                    subject = "Pengingat Tugas";
+                    message = `Tugas "${task.title}" sisa 3 hari lagi! Deadline: ${formatDate(task.deadline)}`;
+                    break;
+                case "reminder":
+                    subject = "Pengingat Tugas";
+                    message = `Tugas "${task.title}" sisa ${settings.reminderTime} hari lagi! Deadline: ${formatDate(task.deadline)}`;
+                    break;
+            }
+            
+            const templateParams = {
+                to_email: settings.userEmail,
+                subject: subject,
+                message: message,
+                task_title: task.title,
+                task_deadline: formatDate(task.deadline),
+                task_category: task.category
+            };
+            
+            emailjs.send('service_gu1rf07', 'template_adj0vad', templateParams)
+                .then(function(response) {
+                    console.log('Email berhasil dikirim!', response.status, response.text);
+                }, function(error) {
+                    console.log('Email gagal dikirim:', error);
+                });
+        }
+        
+        // Kirim email verifikasi
+        function sendVerificationEmail() {
+            // Generate kode verifikasi acak
+            const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+            settings.emailVerificationCode = verificationCode;
+            saveData();
+            
+            const templateParams = {
+                to_email: settings.userEmail,
+                subject: "Verifikasi Email untuk TASKKU",
+                message: `Kode verifikasi Anda adalah: ${verificationCode}. Masukkan kode ini di aplikasi TASKKU untuk verifikasi email.`
+            };
+            
+            emailjs.send('service_gu1rf07', 'template_5z0ue9s', templateParams)
+                .then(function(response) {
+                    showNotification("Email Verifikasi Dikirim", "Kode verifikasi telah dikirim ke email Anda");
+                    document.getElementById('verificationCodeGroup').style.display = 'block';
+                }, function(error) {
+                    showNotification("Gagal Mengirim Email", "Terjadi kesalahan saat mengirim email verifikasi");
+                    console.log('Email gagal dikirim:', error);
+                });
+        }
+        
+        // Render daftar kategori
+        function renderCategories() {
+            const categoryList = document.getElementById('categoryList');
+            const taskCategory = document.getElementById('taskCategory');
+            const manageCategories = document.getElementById('manageCategories');
+            
+            // Kosongkan daftar
+            categoryList.innerHTML = '';
+            taskCategory.innerHTML = '';
+            manageCategories.innerHTML = '';
+            
+            // Tambahkan kategori "Semua"
+            const allItem = document.createElement('li');
+            allItem.className = `category-item ${currentCategory === 'all' ? 'active' : ''}`;
+            allItem.innerHTML = `<i class="fas fa-th-large"></i> Semua Tugas`;
+            allItem.addEventListener('click', () => {
+                currentCategory = 'all';
+                renderTasks();
+                updateActiveCategory();
+            });
+            categoryList.appendChild(allItem);
+            
+            // Tambahkan setiap kategori
+            categories.forEach(category => {
+                // Untuk sidebar
+                const categoryItem = document.createElement('li');
+                categoryItem.className = `category-item ${currentCategory === category.name ? 'active' : ''}`;
+                categoryItem.innerHTML = `<i class="fas fa-folder"></i> ${category.name}`;
+                categoryItem.addEventListener('click', () => {
+                    currentCategory = category.name;
+                    renderTasks();
+                    updateActiveCategory();
+                });
+                categoryList.appendChild(categoryItem);
+                
+                // Untuk dropdown form
+                const option = document.createElement('option');
+                option.value = category.name;
+                option.textContent = category.name;
+                taskCategory.appendChild(option);
+                
+                // Untuk pengelolaan kategori
+                const manageItem = document.createElement('div');
+                manageItem.className = 'category-item';
+                manageItem.innerHTML = `
+                    <i class="fas fa-folder"></i> ${category.name}
+                    <button class="delete-btn" data-id="${category.id}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                `;
+                manageCategories.appendChild(manageItem);
+                
+                // Event listener untuk hapus kategori
+                const deleteBtn = manageItem.querySelector('.delete-btn');
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteCategory(category.id);
+                });
+            });
+            
+            // Update judul kategori yang aktif
+            updateActiveCategory();
+        }
+        
+        // Render daftar catatan di sidebar
+        function renderNotes() {
+            const notesList = document.getElementById('notesList');
+            notesList.innerHTML = '';
+            
+            if (notes.length === 0) {
+                notesList.innerHTML = '<div class="no-tasks"><p>Belum ada catatan</p></div>';
+                return;
+            }
+            
+            notes.forEach(note => {
+                const noteElement = document.createElement('div');
+                noteElement.className = 'note-item';
+                noteElement.setAttribute('data-id', note.id);
+                noteElement.innerHTML = `
+                    <div class="note-title">
+                        <i class="fas fa-sticky-note"></i>
+                        <span>${note.title}</span>
+                    </div>
+                    <button class="delete-btn" data-id="${note.id}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                `;
+                
+                // Event listener untuk membuka catatan
+                noteElement.addEventListener('dblclick', () => {
+                    openNote(note.id);
+                });
+                
+                // Event listener untuk hapus catatan
+                const deleteBtn = noteElement.querySelector('.delete-btn');
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteNote(note.id);
+                });
+                
+                notesList.appendChild(noteElement);
+            });
+        }
+        
+        // Buka catatan
+        function openNote(noteId) {
+            const note = notes.find(n => n.id === noteId);
+            if (!note) return;
+            
+            currentNote = note;
+            document.getElementById('fullScreenNoteTitle').value = note.title;
+            document.getElementById('fullScreenEditor').innerHTML = note.content || '';
+            document.getElementById('fullScreenNote').style.display = 'flex';
+        }
+        
+        // Hapus catatan
+        function deleteNote(noteId) {
+            if (confirm('Apakah Anda yakin ingin menghapus catatan ini?')) {
+                const noteTitle = notes.find(n => n.id === noteId)?.title;
+                notes = notes.filter(note => note.id !== noteId);
+                saveData();
+                renderNotes();
+                showNotification("Catatan Dihapus", `Catatan "${noteTitle}" telah dihapus!`);
+            }
+        }
+        
+        // Update tampilan kategori aktif
+        function updateActiveCategory() {
+            document.getElementById('currentCategory').textContent = 
+                currentCategory === 'all' ? 'Semua Tugas' : currentCategory;
+                
+            // Update class active di sidebar
+            document.querySelectorAll('.category-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            if (currentCategory === 'all') {
+                document.querySelectorAll('.category-item')[0].classList.add('active');
+            } else {
+                const categoryItems = document.querySelectorAll('.category-item');
+                for (let i = 0; i < categoryItems.length; i++) {
+                    if (categoryItems[i].textContent.includes(currentCategory)) {
+                        categoryItems[i].classList.add('active');
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Tampilkan tugas berdasarkan kategori
+        function renderTasks() {
+            const container = document.getElementById('tasksContainer');
+            
+            // Reset container
+            container.innerHTML = '';
+            
+            // Filter tugas berdasarkan kategori
+            let filteredTasks = tasks.filter(task => !task.completed);
+            if (currentCategory !== 'all') {
+                filteredTasks = filteredTasks.filter(task => task.category === currentCategory);
+            }
+            
+            // Tampilkan tugas
+            if (filteredTasks.length > 0) {
+                filteredTasks.forEach(task => {
+                    const timeLeft = calculateTimeLeft(task.deadline);
+                    
+                    const taskElement = document.createElement('div');
+                    taskElement.className = `task-card ${timeLeft.status}`;
+                    taskElement.setAttribute('data-id', task.id);
+                    taskElement.innerHTML = `
+                        <div class="task-header">
+                            <h3 class="task-title">${task.title}</h3>
+                            <span class="task-subject">${task.category}</span>
+                        </div>
+                        
+                        <div class="task-details">
+                            <div class="task-detail">
+                                <i class="far fa-calendar"></i>
+                                <span>${formatDate(task.deadline)}</span>
+                            </div>
+                            <div class="task-detail">
+                                <i class="far fa-clock"></i>
+                                <span>${timeLeft.text}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="task-actions">
+                            <button class="complete-btn">
+                                <i class="fas fa-check"></i> Selesai
+                            </button>
+                            <button class="delete-btn">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                    
+                    // Event listener untuk membuka detail (klik ganda)
+                    let clickTimer = null;
+                    taskElement.addEventListener('click', (e) => {
+                        if (clickTimer === null) {
+                            clickTimer = setTimeout(() => {
+                                clickTimer = null;
+                            }, 300);
+                        } else {
+                            clearTimeout(clickTimer);
+                            clickTimer = null;
+                            showTaskDetail(task.id);
+                        }
+                    });
+                    
+                    // Event listener untuk tombol selesai
+                    const completeBtn = taskElement.querySelector('.complete-btn');
+                    completeBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        completeTask(task.id);
+                    });
+                    
+                    // Event listener untuk tombol hapus
+                    const deleteBtn = taskElement.querySelector('.delete-btn');
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        deleteTask(task.id);
+                    });
+                    
+                    container.appendChild(taskElement);
+                });
+            } else {
+                container.innerHTML = `
+                    <div class="no-tasks">
+                        <i class="fas fa-check-circle"></i>
+                        <h3>Tidak ada tugas!</h3>
+                        <p>Silakan tambahkan tugas baru.</p>
+                    </div>
+                `;
+            }
+            
+            // Render notifikasi di sidebar
+            renderNotifications();
+            
+            // Simpan data ke localStorage
+            saveData();
+        }
+        
+        // Render notifikasi di sidebar
+        function renderNotifications() {
+            const notificationList = document.getElementById('notificationList');
+            notificationList.innerHTML = '';
+            
+            const urgentTasks = tasks.filter(task => 
+                !task.completed && calculateTimeLeft(task.deadline).status === "danger"
+            );
+            
+            const warningTasks = tasks.filter(task => 
+                !task.completed && calculateTimeLeft(task.deadline).status === "warning"
+            );
+            
+            if (urgentTasks.length > 0) {
+                const notifItem = document.createElement('div');
+                notifItem.className = 'category-item';
+                notifItem.innerHTML = `
+                    <i class="fas fa-exclamation-circle" style="color: var(--danger);"></i>
+                    <span>${urgentTasks.length} tugas mendesak</span>
+                `;
+                notificationList.appendChild(notifItem);
+            }
+            
+            if (warningTasks.length > 0) {
+                const notifItem = document.createElement('div');
+                notifItem.className = 'category-item';
+                notifItem.innerHTML = `
+                    <i class="fas fa-clock" style="color: var(--warning);"></i>
+                    <span>${warningTasks.length} tugas mendekati deadline</span>
+                `;
+                notificationList.appendChild(notifItem);
+            }
+            
+            if (urgentTasks.length === 0 && warningTasks.length === 0) {
+                const notifItem = document.createElement('div');
+                notifItem.className = 'category-item';
+                notifItem.innerHTML = `
+                    <i class="fas fa-check-circle" style="color: var(--safe);"></i>
+                    <span>Tidak ada tugas mendesak</span>
+                `;
+                notificationList.appendChild(notifItem);
+            }
+        }
+        
+        // Tampilkan detail tugas
+        function showTaskDetail(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+            
+            currentTask = task;
+            isEditingTask = false;
+            const timeLeft = calculateTimeLeft(task.deadline);
+            
+            document.getElementById('detailTaskTitle').textContent = task.title;
+            document.getElementById('detailTaskSubject').textContent = task.category;
+            document.getElementById('detailTaskDeadline').textContent = `Deadline: ${formatDate(task.deadline)}`;
+            document.getElementById('detailTaskTimeLeft').textContent = timeLeft.text;
+            document.getElementById('detailTaskDescription').textContent = task.description || 'Tidak ada catatan';
+            document.getElementById('noteEditor').innerHTML = task.notes || '';
+            
+            // Atur event listeners untuk tombol di modal detail
+            document.getElementById('completeTaskBtn').onclick = () => {
+                completeTask(taskId);
+                document.getElementById('taskDetailModal').style.display = 'none';
+            };
+            
+            document.getElementById('editTaskBtn').onclick = () => {
+                editTask(taskId);
+            };
+            
+            document.getElementById('deleteTaskBtn').onclick = () => {
+                deleteTask(taskId);
+                document.getElementById('taskDetailModal').style.display = 'none';
+            };
+            
+            document.getElementById('saveNoteBtn').onclick = () => {
+                saveTaskNote(taskId);
+            };
+
+            document.getElementById('openFullScreenEditor').onclick = () => {
+                openFullScreenEditor(task);
+            };
+            
+            document.getElementById('downloadNoteTextBtn').onclick = () => {
+                downloadNoteAsText(task);
+            };
+            
+            document.getElementById('taskDetailModal').style.display = 'flex';
+        }
+        
+        // Edit tugas
+        function editTask(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+            
+            // Jika belum dalam mode edit, ubah ke mode edit
+            if (!isEditingTask) {
+                isEditingTask = true;
+                
+                // Ubah tampilan modal detail ke mode edit
+                document.getElementById('detailTaskTitle').textContent = "Edit Tugas";
+                document.getElementById('detailTaskSubject').style.display = 'none';
+                document.getElementById('detailTaskDeadline').style.display = 'none';
+                document.getElementById('detailTaskTimeLeft').style.display = 'none';
+                document.getElementById('detailTaskDescription').style.display = 'none';
+                
+                // Tambahkan form edit
+                const taskDetails = document.querySelector('.task-details');
+                taskDetails.innerHTML = `
+                    <div class="form-group">
+                        <label for="editTaskName">Judul Tugas</label>
+                        <input type="text" class="form-control" id="editTaskName" value="${task.title}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editTaskCategory">Kategori</label>
+                        <select class="form-control" id="editTaskCategory" required>
+                            ${categories.map(cat => 
+                                `<option value="${cat.name}" ${task.category === cat.name ? 'selected' : ''}>${cat.name}</option>`
+                            ).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editTaskDeadline">Deadline</label>
+                        <input type="datetime-local" class="form-control" id="editTaskDeadline" value="${task.deadline}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editTaskDescription">Deskripsi Tugas</label>
+                        <textarea class="form-control" id="editTaskDescription" rows="4">${task.description || ''}</textarea>
+                    </div>
+                `;
+                
+                // Ubah tombol edit menjadi simpan
+                document.getElementById('editTaskBtn').innerHTML = '<i class="fas fa-save"></i> Simpan Perubahan';
+            } else {
+                // Jika dalam mode edit, simpan perubahan
+                const updatedTask = {
+                    ...task,
+                    title: document.getElementById('editTaskName').value,
+                    category: document.getElementById('editTaskCategory').value,
+                    deadline: document.getElementById('editTaskDeadline').value,
+                    description: document.getElementById('editTaskDescription').value
+                };
+                
+                const taskIndex = tasks.findIndex(t => t.id === taskId);
+                if (taskIndex !== -1) {
+                    tasks[taskIndex] = updatedTask;
+                    saveData();
+                    renderTasks();
+                    showNotification("Tugas Diperbarui", `Tugas "${updatedTask.title}" berhasil diperbarui!`);
+                    
+                    // Tutup modal
+                    document.getElementById('taskDetailModal').style.display = 'none';
+                }
+            }
+        }
+        
+        // Simpan catatan tugas
+        function saveTaskNote(taskId) {
+            const taskIndex = tasks.findIndex(task => task.id === taskId);
+            if (taskIndex !== -1) {
+                tasks[taskIndex].notes = document.getElementById('noteEditor').innerHTML;
+                saveData();
+                showNotification("Catatan Disimpan", `Catatan untuk "${tasks[taskIndex].title}" telah disimpan!`);
+            }
+        }
+        
+        // Download catatan sebagai teks
+        function downloadNoteAsText(task) {
+            const noteContent = document.getElementById('noteEditor').innerText;
+            const blob = new Blob([noteContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${task.title}_catatan.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showNotification("Catatan Didownload", `Catatan untuk "${task.title}" telah didownload!`);
+        }
+        
+        // Tandai tugas selesai
+        function completeTask(taskId) {
+            const taskIndex = tasks.findIndex(task => task.id === taskId);
+            if (taskIndex !== -1) {
+                tasks[taskIndex].completed = true;
+                tasks[taskIndex].completedAt = new Date().toISOString();
+                renderTasks();
+                showNotification("Tugas Selesai", `Tugas "${tasks[taskIndex].title}" telah ditandai selesai!`);
+            }
+        }
+        
+        // Hapus tugas
+        function deleteTask(taskId) {
+            if (confirm('Apakah Anda yakin ingin menghapus tugas ini?')) {
+                const taskTitle = tasks.find(t => t.id === taskId)?.title;
+                tasks = tasks.filter(task => task.id !== taskId);
+                renderTasks();
+                showNotification("Tugas Dihapus", `Tugas "${taskTitle}" telah dihapus!`);
+            }
+        }
+        
+        // Tambah kategori baru
+        function addCategory(name) {
+            // Cek apakah kategori sudah ada
+            if (categories.some(cat => cat.name.toLowerCase() === name.toLowerCase())) {
+                alert('Kategori sudah ada!');
+                return;
+            }
+            
+            const newCategory = {
+                id: categories.length > 0 ? Math.max(...categories.map(c => c.id)) + 1 : 1,
+                name: name
+            };
+            
+            categories.push(newCategory);
+            saveData();
+            renderCategories();
+            showNotification("Kategori Ditambahkan", `Kategori "${name}" berhasil ditambahkan!`);
+        }
+        
+        // Hapus kategori
+        function deleteCategory(categoryId) {
+            const category = categories.find(c => c.id === categoryId);
+            if (!category) return;
+            
+            // Cek apakah ada tugas yang menggunakan kategori ini
+            const tasksWithCategory = tasks.filter(task => task.category === category.name && !task.completed);
+            
+            if (tasksWithCategory.length > 0) {
+                alert(`Tidak dapat menghapus kategori "${category.name}" karena masih digunakan oleh ${tasksWithCategory.length} tugas.`);
+                return;
+            }
+            
+            if (confirm(`Apakah Anda yakin ingin menghapus kategori "${category.name}"?`)) {
+                categories = categories.filter(c => c.id !== categoryId);
+                saveData();
+                renderCategories();
+                showNotification("Kategori Dihapus", `Kategori "${category.name}" telah dihapus!`);
+            }
+        }
+        
+        // Tambah tugas baru
+        function addNewTask(event) {
+            event.preventDefault();
+            
+            const taskName = document.getElementById('taskName').value;
+            const taskCategory = document.getElementById('taskCategory').value;
+            const taskDeadline = document.getElementById('taskDeadline').value;
+            const taskDescription = document.getElementById('taskDescription').value;
+            
+            const newTask = {
+                id: tasks.length > 0 ? Math.max(...tasks.map(t => t.id)) + 1 : 1,
+                title: taskName,
+                category: taskCategory,
+                deadline: taskDeadline,
+                description: taskDescription,
+                completed: false,
+                createdAt: new Date().toISOString(),
+                notes: ""
+            };
+            
+            tasks.push(newTask);
+            renderTasks();
+            
+            // Reset form dan sembunyikan modal
+            document.getElementById('taskForm').reset();
+            document.getElementById('taskModal').style.display = 'none';
+            
+            showNotification("Tugas Ditambahkan", `Tugas "${taskName}" berhasil ditambahkan!`);
+            
+            // Periksa deadline untuk notifikasi
+            setTimeout(() => {
+                checkDeadlines();
+            }, 1000);
+        }
+        
+        // Simpan pengaturan
+        function saveSettings() {
+            settings.notifications = document.getElementById('enableNotifications').checked;
+            settings.reminderTime = parseInt(document.getElementById('reminderTime').value);
+            
+            const userEmail = document.getElementById('userEmail').value;
+            if (userEmail !== settings.userEmail) {
+                settings.userEmail = userEmail;
+                settings.emailVerified = false;
+            }
+            
+            saveData();
+            showNotification("Pengaturan Disimpan", "Pengaturan berhasil disimpan!");
+            
+            // Perbarui tampilan verifikasi email
+            updateEmailVerificationUI();
+        }
+        
+        // Perbarui UI verifikasi email
+        function updateEmailVerificationUI() {
+            const emailVerificationSection = document.getElementById('emailVerificationSection');
+            const emailVerificationStatus = document.getElementById('emailVerificationStatus');
+            
+            if (settings.userEmail) {
+                emailVerificationSection.style.display = 'block';
+                
+                if (settings.emailVerified) {
+                    emailVerificationStatus.innerHTML = `
+                        <i class="fas fa-check-circle verified"></i>
+                        <span>Email telah diverifikasi</span>
+                    `;
+                    document.getElementById('sendVerificationBtn').style.display = 'none';
+                    document.getElementById('verificationCodeGroup').style.display = 'none';
+                } else {
+                    emailVerificationStatus.innerHTML = `
+                        <i class="fas fa-times-circle not-verified"></i>
+                        <span>Email belum diverifikasi</span>
+                    `;
+                    document.getElementById('sendVerificationBtn').style.display = 'block';
+                }
+            } else {
+                emailVerificationSection.style.display = 'none';
+            }
+        }
+        
+        // Buka editor full screen untuk catatan
+        function openFullScreenEditor(task = null) {
+            if (task) {
+                // Mode edit catatan tugas
+                currentNote = {
+                    id: task.id,
+                    title: task.title,
+                    type: 'text',
+                    content: task.notes || ''
+                };
+                document.getElementById('fullScreenNoteTitle').value = task.title;
+                document.getElementById('fullScreenEditor').innerHTML = task.notes || '';
+            } else {
+                // Mode catatan baru
+                const noteTitle = document.getElementById('noteTitle').value;
+                if (!noteTitle) {
+                    alert('Silakan masukkan judul catatan!');
+                    return;
+                }
+                
+                currentNote = {
+                    id: notes.length > 0 ? Math.max(...notes.map(n => n.id)) + 1 : 1,
+                    title: noteTitle,
+                    type: 'text',
+                    content: ''
+                };
+                document.getElementById('fullScreenNoteTitle').value = noteTitle;
+                document.getElementById('fullScreenEditor').innerHTML = '';
+            }
+            
+            // Sembunyikan modal dan tampilkan editor full screen
+            document.getElementById('taskDetailModal').style.display = 'none';
+            document.getElementById('createNoteModal').style.display = 'none';
+            document.getElementById('fullScreenNote').style.display = 'flex';
+        }
+        
+        // Simpan catatan
+        function saveNote() {
+            const noteTitle = document.getElementById('fullScreenNoteTitle').value;
+            const noteContent = document.getElementById('fullScreenEditor').innerHTML;
+            
+            if (!noteTitle) {
+                alert('Judul catatan tidak boleh kosong!');
+                return;
+            }
+            
+            currentNote.title = noteTitle;
+            currentNote.content = noteContent;
+            
+            if (currentNote.id in tasks) {
+                // Jika catatan adalah bagian dari tugas
+                const taskIndex = tasks.findIndex(t => t.id === currentNote.id);
+                if (taskIndex !== -1) {
+                    tasks[taskIndex].notes = currentNote.content;
+                }
+            } else {
+                // Jika catatan independen
+                const existingIndex = notes.findIndex(n => n.id === currentNote.id);
+                if (existingIndex !== -1) {
+                    notes[existingIndex] = currentNote;
+                } else {
+                    notes.push(currentNote);
+                }
+            }
+            
+            saveData();
+            renderNotes();
+            showNotification("Catatan Disimpan", "Catatan berhasil disimpan!");
+            
+            // Tutup editor
+            document.getElementById('fullScreenNote').style.display = 'none';
+        }
+        
+        // Download catatan sebagai teks
+        function downloadNote() {
+            const noteContent = document.getElementById('fullScreenEditor').innerText;
+            const blob = new Blob([noteContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${currentNote.title}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showNotification("Catatan Didownload", "Catatan telah didownload!");
+        }
+        
+        // Inisialisasi aplikasi
+        window.onload = function() {
+            initTheme();
+            renderCategories();
+            renderNotes();
+            renderTasks();
+            
+            // Terapkan pengaturan
+            document.getElementById('enableNotifications').checked = settings.notifications;
+            document.getElementById('reminderTime').value = settings.reminderTime;
+            document.getElementById('userEmail').value = settings.userEmail || '';
+            
+            // Perbarui UI verifikasi email
+            updateEmailVerificationUI();
+            
+            // Periksa deadline untuk notifikasi
+            checkDeadlines();
+            
+            // Event listeners untuk modal
+            document.getElementById('addTaskBtn').addEventListener('click', function() {
+                document.getElementById('taskModalTitle').textContent = "Tambah Tugas Baru";
+                document.getElementById('taskForm').reset();
+                document.getElementById('taskModal').style.display = 'flex';
+            });
+            
+            document.getElementById('closeTaskModal').addEventListener('click', function() {
+                document.getElementById('taskModal').style.display = 'none';
+            });
+            
+            document.getElementById('closeDetailModal').addEventListener('click', function() {
+                document.getElementById('taskDetailModal').style.display = 'none';
+            });
+            
+            document.getElementById('closeCategoryModal').addEventListener('click', function() {
+                document.getElementById('categoryModal').style.display = 'none';
+            });
+            
+            document.getElementById('closeSettingsModal').addEventListener('click', function() {
+                document.getElementById('settingsModal').style.display = 'none';
+            });
+            
+            document.getElementById('closeCreateNoteModal').addEventListener('click', function() {
+                document.getElementById('createNoteModal').style.display = 'none';
+            });
+            
+            document.getElementById('taskForm').addEventListener('submit', addNewTask);
+            
+            // Event listener untuk tombol kategori baru di form
+            document.getElementById('newCategoryBtn').addEventListener('click', function() {
+                document.getElementById('categoryModalTitle').textContent = "Tambah Kategori Baru";
+                document.getElementById('categoryForm').reset();
+                document.getElementById('taskModal').style.display = 'none';
+                document.getElementById('categoryModal').style.display = 'flex';
+            });
+            
+            // Event listener untuk form kategori
+            document.getElementById('categoryForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const categoryName = document.getElementById('categoryName').value;
+                addCategory(categoryName);
+                document.getElementById('categoryModal').style.display = 'none';
+                document.getElementById('taskModal').style.display = 'flex';
+            });
+            
+            // Event listener untuk tombol tambah kategori di sidebar
+            document.getElementById('addCategoryBtn').addEventListener('click', function() {
+                document.getElementById('categoryModalTitle').textContent = "Tambah Kategori Baru";
+                document.getElementById('categoryForm').reset();
+                document.getElementById('categoryModal').style.display = 'flex';
+            });
+            
+            // Event listener untuk tombol pengaturan
+            document.getElementById('settingsBtn').addEventListener('click', function() {
+                document.getElementById('settingsModal').style.display = 'flex';
+            });
+            
+            // Event listener untuk tombol buat catatan
+            document.getElementById('createNoteBtn').addEventListener('click', function() {
+                document.getElementById('createNoteModal').style.display = 'flex';
+            });
+            
+            // Event listener untuk mulai membuat catatan
+            document.getElementById('startNoteBtn').addEventListener('click', function() {
+                openFullScreenEditor();
+            });
+            
+            // Event listener untuk simpan pengaturan
+            document.getElementById('saveSettingsBtn').addEventListener('click', function() {
+                saveSettings();
+            });
+            
+            // Event listener untuk kirim verifikasi email
+            document.getElementById('sendVerificationBtn').addEventListener('click', function() {
+                if (!settings.userEmail) {
+                    alert('Silakan masukkan email terlebih dahulu!');
+                    return;
+                }
+                sendVerificationEmail();
+            });
+            
+            // Event listener untuk verifikasi email
+            document.getElementById('verifyEmailBtn').addEventListener('click', function() {
+                const verificationCode = document.getElementById('verificationCode').value;
+                if (verificationCode === settings.emailVerificationCode) {
+                    settings.emailVerified = true;
+                    saveData();
+                    updateEmailVerificationUI();
+                    showNotification("Email Terverifikasi", "Email Anda telah berhasil diverifikasi!");
+                } else {
+                    alert('Kode verifikasi tidak sesuai!');
+                }
+            });
+            
+            // Event listener untuk toolbar editor
+            document.querySelectorAll('.tool-btn').forEach(button => {
+                if (button.dataset.command) {
+                    button.addEventListener('click', function() {
+                        const command = this.dataset.command;
+                        document.execCommand(command, false, null);
+                        document.getElementById('fullScreenEditor').focus();
+                    });
+                }
+            });
+            
+            // Event listener untuk toggle menu di mobile
+            document.getElementById('menuToggle').addEventListener('click', function() {
+                document.getElementById('sidebar').classList.toggle('active');
+            });
+            
+            // Event listener untuk editor full screen
+            document.getElementById('closeFullScreenBtn').addEventListener('click', function() {
+                document.getElementById('fullScreenNote').style.display = 'none';
+            });
+            
+            document.getElementById('saveNoteBtnFull').addEventListener('click', function() {
+                saveNote();
+            });
+            
+            document.getElementById('downloadNoteBtn').addEventListener('click', function() {
+                downloadNote();
+            });
+            
+            // Klik di luar modal untuk menutup
+            window.addEventListener('click', function(event) {
+                if (event.target.classList.contains('modal')) {
+                    event.target.style.display = 'none';
+                }
+                
+                // Tutup sidebar jika klik di luar (mobile)
+                if (window.innerWidth <= 768 && !event.target.closest('.sidebar') && 
+                    !event.target.closest('#menuToggle')) {
+                    document.getElementById('sidebar').classList.remove('active');
+                }
+            });
+            
+            // Periksa deadline setiap 30 menit
+            setInterval(checkDeadlines, 30 * 60 * 1000);
+        };
+    </script>
+</body>
+</html>
