@@ -1,20 +1,19 @@
 # TASSKU
 
-A task management application.
-
-## Features
-- Create and manage tasks
-- Track your to-do list
-- Simple and intuitive interface
-
-## Technology
-- HTML
-- CSS
-- JavaScript
-
-## Getting Started
-1. Clone this repository
-2. Open `index.html` in your browser
+> TASSKU is website tour made with html
 
 ---
-*Created by Usa-bunny*
+
+## 🚀 Getting Started
+
+### Installation
+1. Clone the repository:
+~~~bash
+git clone https://github.com/Usa-bunny/TASSKU.git
+cd TASSKU
+~~~
+2. Open `index.html` in your browser.
+
+---
+
+<p align="center">🎮 <strong>Created by <a href="https://github.com/Usa-bunny">Usa-bunny</a></strong></p>
